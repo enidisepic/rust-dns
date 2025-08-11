@@ -1,3 +1,5 @@
+mod types;
+
 use std::io;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
@@ -6,14 +8,14 @@ use tracing::{Level, error, info, span};
 const BIND_PORT: u16 = 2000;
 const BIND_IP_ADDRESS: &str = "0.0.0.0";
 
-struct DnsUdpMessage {
+struct DnsDatagram {
     length: usize,
     data: [u8; 512], // RFC 1035 specifies a maximum UDP datagram size of 512 bytes
     remote_address: SocketAddr,
 }
 
 #[tracing::instrument(skip_all, fields(remote_address = message.remote_address.to_string()))]
-async fn handle_udp(socket: &UdpSocket, message: DnsUdpMessage) -> io::Result<()> {
+async fn handle_udp(socket: &UdpSocket, message: DnsDatagram) -> io::Result<()> {
     Ok(())
 }
 
@@ -45,7 +47,11 @@ async fn main() -> io::Result<()> {
                 let Ok((length, remote_address)) = udp_socket.recv_from(&mut data).await else {
                     continue;
                 };
-                let dns_udp_message = DnsUdpMessage { length, data, remote_address, };
+                let dns_udp_message = DnsDatagram {
+                    length,
+                    data,
+                    remote_address,
+                };
                 match handle_udp(&udp_socket, dns_udp_message).await {
                     Ok(_) => info!("Handled UDP request from {}", remote_address),
                     Err(error) => error!("Failed to handle UDP request: {}", error),
